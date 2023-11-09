@@ -1,2 +1,2 @@
-# crud-jogos-estudantis-mongo
-CRUD em NoSQL
+# CRUD - Jogos Estudantis (versão NoSQL)
+

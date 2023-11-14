@@ -12,7 +12,7 @@ class ControllerEscola:
 
         cnpj = input("Insira o CNPJ novo: ").strip()
 
-        if not self.verificar_existencia_escola(cnpj):
+        if self.verificar_existencia_escola(cnpj):
             nome_escola = input("Nome da escola nova: ").strip()
             nivel = input("Nível de ensino da escola: ").strip()
             endereco = input("Endereço: ").strip()
@@ -37,7 +37,7 @@ class ControllerEscola:
 
         cnpj = input("Insira o CNPJ da escola para alteração de telefone: ").strip()
 
-        if self.verificar_existencia_escola(cnpj):
+        if not self.verificar_existencia_escola(cnpj):
             novo_telefone = input("Novo telefone: ").strip()
             self.mongo.db["escolas"].update_one({"cnpj": cnpj}, {"$set": {"telefone": novo_telefone}})
             df_escola = self.recuperar_escola(cnpj)
@@ -55,7 +55,7 @@ class ControllerEscola:
 
         cnpj = input("Insira o CNPJ da escola para exclusão: ").strip()
 
-        if self.verificar_existencia_escola(cnpj):
+        if not self.verificar_existencia_escola(cnpj):
             df_escola = self.recuperar_escola(cnpj)
             self.mongo.db["escolas"].delete_one({"cnpj": cnpj})
             escola_excluida = Escola(df_escola.cnpj.values[0], df_escola.nome.values[0], df_escola.nivel_ensino.values[0], df_escola.endereco.values[0], df_escola.telefone.values[0])
@@ -66,17 +66,21 @@ class ControllerEscola:
             print("[!] Essa escola não existe.")
             self.mongo.close()
 
-    def verificar_existencia_escola(self, cnpj:str=None) -> bool:
-        self.mongo.connect()
+    def verificar_existencia_escola(self, cnpj:str=None, external:bool=False) -> bool:
+        if external:
+            self.mongo.connect()
         df_escola = pd.DataFrame(self.mongo.db["escolas"].find({"cnpj": cnpj}))
-        self.mongo.close()
-        return bool(df_escola)
+        if external:
+            self.mongo.close()
+        return df_escola.empty
 
-    def recuperar_escola(self, cnpj:str=None) -> pd.DataFrame:
-        self.mongo.connect()
+    def recuperar_escola(self, cnpj:str=None, external:bool=False) -> pd.DataFrame:
+        if external:
+            self.mongo.connect()
         df_escola = pd.DataFrame(list(self.mongo.db["escolas"].find(
             {"cnpj": cnpj},
             {"cnpj": 1, "nome": 1, "nivel_ensino": 1, "endereco": 1, "telefone": 1, "_id": 0}
             )))
-        self.mongo.close()
+        if external:
+            self.mongo.close()
         return df_escola

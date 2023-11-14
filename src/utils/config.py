@@ -1,3 +1,5 @@
+from conexion.mongo_queries import MongoQueries
+
 MENU_PRINCIPAL = """--= Menu Principal =--
 1. Relatórios
 2. Inserir Registros
@@ -26,6 +28,13 @@ MENU_ENTIDADES = """--= Entidades =--
 """
 
 CONSULTA_QUANTIDADE = 'SELECT COUNT(1) AS TOTAL_{tabela} FROM {tabela}'
+
+def contar_documentos(nome_colecao):
+   mongo = MongoQueries()
+   mongo.connect()
+   quantidade = mongo.db[nome_colecao].count_documents({})
+   mongo.close()
+   return quantidade
 
 def clear_console(wait_time:int=2):
     '''

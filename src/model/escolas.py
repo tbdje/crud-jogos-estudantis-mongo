@@ -6,7 +6,6 @@ class Escola:
                  nivel_ensino:str=None,
                  endereco:str=None,
                  telefone:str=None) -> None:
-        self.id = id
         self.cnpj = cnpj
         self.nome = nome
         self.nivel_ensino = nivel_ensino

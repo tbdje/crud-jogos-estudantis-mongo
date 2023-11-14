@@ -3,14 +3,14 @@ from utils import config
 class SplashScreen:
 
     def __init__(self):
-        self.created_by = "Felipe L. Nunes, Rafael Pereira,\n Ramiro Biazatti, Amanda de Moraes e Pedro Pimentel."
+        self.created_by = "Felipe L. Nunes, Rafael Pereira,\n Ramiro Biazatti, Amanda de Moraes, Pedro Pimentel e Marciel Jastrow."
         self.professor = "Prof. M.Sc. Howard Roatti"
         self.disciplina = "Banco de Dados"
         self.semestre = "2023/2"
 
     def get_documents_count(self, collection_name):
-        df = config.query_count(collection_name=collection_name)
-        return df[f"total_{collection_name}"].values[0]
+        quantidade = config.contar_documentos(nome_colecao=collection_name)
+        return quantidade
 
     def get_updated_screen(self):
         return f"""

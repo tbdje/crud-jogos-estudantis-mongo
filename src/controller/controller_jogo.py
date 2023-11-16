@@ -89,13 +89,56 @@ class ControllerJogo:
 
 
     def atualizar_jogo(self) -> Jogo:
-        pass
+        self.mongo.connect()
+
+        id_jogo_alteracao = int(input("Insira o ID do jogo para alterar: ").strip())
+
+        if not self.verificar_existencia_jogo(id_jogo_alteracao):
+            nova_data = input("Insira a nova data do jogo [dia/mes/ano]: ").strip()
+            novo_horario = input("Insira o novo horário [hora:minuto]: ").strip()
+
+            nova_data = list(map(int, nova_data.split("/")))
+            novo_horario = list(map(int, novo_horario.split(":")))
+
+            nova_data_hora = datetime(
+                year=nova_data[2],
+                month=nova_data[1],
+                day=nova_data[0],
+                hour=novo_horario[0],
+                minute=novo_horario[1]
+            )
+
+            self.mongo.db["jogos"].update_one(
+                {
+                    "id_jogo": id_jogo_alteracao
+                },
+                {
+                    "$set": {
+                        "data_hora": nova_data_hora.strftime("%d/%m/%Y %H:%M")
+                    }
+                }
+            )
+
+            df_jogo = self.recuperar_jogo_id(id_jogo_alteracao)
+            escola = self.validar_escola(df_jogo.cnpj.values[0])
+
+            jogo_atualizado = Jogo(df_jogo.id_jogo.values[0], nova_data_hora, escola)
+
+            print("[^+]", jogo_atualizado.to_string())
+            self.mongo.close()
+
+            return jogo_atualizado
+        else:
+            self.mongo.close()
+            print("[!] Esse jogo não existe.")
+            return None
 
     def excluir_jogo(self):
         pass
 
-    def verificar_existencia_jogo(self):
-        pass
+    def verificar_existencia_jogo(self, id_jogo: int = None, external: bool = None):
+        df_jogo = self.recuperar_jogo_id(id_jogo, external=external)
+        return df_jogo.empty
 
     def recuperar_jogo(self, _id):
         df_jogo = pd.DataFrame(
@@ -103,6 +146,23 @@ class ControllerJogo:
                 {"_id": _id}, {"id_jogo": 1, "data_hora": 1, "cnpj": 1, "_id": 0}
             ))
         )
+        return df_jogo
+    
+    def recuperar_jogo_id(self, id_jogo: int = None, external: bool = False):
+        if external:
+            self.mongo.connect()
+        df_jogo = pd.DataFrame(list(
+            self.mongo.db["jogos"].find(
+                {
+                    "id_jogo": id_jogo
+                },
+                {
+                    "id_jogo": 1, "data_hora": 1, "cnpj": 1, "_id": 0
+                }
+            )
+        ))
+        if external:
+            self.mongo.close()
         return df_jogo
 
     def validar_escola(self, cnpj: str = None) -> Escola:

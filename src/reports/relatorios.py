@@ -7,7 +7,7 @@ class Relatorio:
     def __init__(self):
         pass
 
-    def get_relatorio_escolas(self):
+    def get_relatorio_escolas(self):  # OK
         mongo = MongoQueries()
         mongo.connect()
         escolas = mongo.db["escolas"].find(
@@ -23,32 +23,27 @@ class Relatorio:
         mongo = MongoQueries()
         mongo.connect()
         jogos = mongo.db["jogos"].aggregate(
-                                            [
-                                            {
-                                                '$lookup': {
-                                                    'from': 'escolas',
-                                                    'localField': 'cnpj',
-                                                    'foreignField': 'cnpj',
-                                                    'as': 'escola'
-                                                }
-                                            },
-                                            {
-                                                '$unwind': '$escola'
-                                            },
-                                            {
-                                                '$project': {
-                                                    '_id': 0,
-                                                    'id_jogo': '$id_jogo',
-                                                    'data_horario': {
-                                                        '$dateToString': {
-                                                            'format': '%d/%m/%Y %H:%M',
-                                                            'date': '$data_hora'
-                                                        }
-                                                    },
-                                                    'local': '$escola.nome'
-                                                }
-                                            }
-                                            ]
+            [
+                {
+                    "$lookup": {
+                        "from": "escolas",
+                        "localField": "cnpj",
+                        "foreignField": "cnpj",
+                        "as": "escola"
+                    }
+                },
+                {
+                    "$unwind": "$escola"
+                },
+                {
+                    "$project": {
+                        "id_jogo": "$id_jogo",
+                        "data_hora": "$data_hora",
+                        "local": "$escola.nome",
+                        "_id": 0
+                    }
+                }
+            ]
         )
         df_jogo = pd.DataFrame(list(jogos))
         mongo.close()

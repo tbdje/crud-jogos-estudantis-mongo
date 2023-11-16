@@ -1,6 +1,6 @@
+import pandas as pd
 from conexion.mongo_queries import MongoQueries
 from model.escolas import Escola
-import pandas as pd
 
 class ControllerEscola:
 
@@ -17,20 +17,34 @@ class ControllerEscola:
             nivel = input("Nível de ensino da escola: ").strip()
             endereco = input("Endereço: ").strip()
             telefone = input("Telefone da escola: ").strip()
-            
-            self.mongo.db["escolas"].insert_one({"cnpj": cnpj, "nome": nome_escola, "nivel_ensino": nivel, "endereco": endereco, "telefone": telefone})
-            
+
+            self.mongo.db["escolas"].insert_one(
+                {
+                    "cnpj": cnpj,
+                    "nome": nome_escola,
+                    "nivel_ensino": nivel,
+                    "endereco": endereco,
+                    "telefone": telefone
+                }
+            )
+
             df_escola = self.recuperar_escola(cnpj)
-            nova_escola = Escola(df_escola.cnpj.values[0], df_escola.nome.values[0], df_escola.nivel_ensino.values[0], df_escola.endereco.values[0], df_escola.telefone.values[0])
-            
+            nova_escola = Escola(
+                df_escola.cnpj.values[0],
+                df_escola.nome.values[0],
+                df_escola.nivel_ensino.values[0],
+                df_escola.endereco.values[0],
+                df_escola.telefone.values[0]
+            )
+
             print("[+]", nova_escola.to_string())
 
             self.mongo.close()
             return nova_escola
-        else:
-            self.mongo.close()
-            print("[!] Essa escola já está cadastrada.")
-            return None
+
+        self.mongo.close()
+        print("[!] Essa escola já está cadastrada.")
+        return None
 
     def atualizar_escola(self) -> Escola:
         self.mongo.connect()
@@ -39,16 +53,29 @@ class ControllerEscola:
 
         if not self.verificar_existencia_escola(cnpj):
             novo_telefone = input("Novo telefone: ").strip()
-            self.mongo.db["escolas"].update_one({"cnpj": cnpj}, {"$set": {"telefone": novo_telefone}})
+            self.mongo.db["escolas"].update_one(
+                {
+                    "cnpj": cnpj
+                },
+                {
+                    "$set": {"telefone": novo_telefone}
+                }
+            )
             df_escola = self.recuperar_escola(cnpj)
-            escola_atualizada = Escola(df_escola.cnpj.values[0], df_escola.nome.values[0], df_escola.nivel_ensino.values[0], df_escola.endereco.values[0], df_escola.telefone.values[0])
+            escola_atualizada = Escola(
+                df_escola.cnpj.values[0],
+                df_escola.nome.values[0],
+                df_escola.nivel_ensino.values[0],
+                df_escola.endereco.values[0],
+                df_escola.telefone.values[0]
+            )
             print("[^+]", escola_atualizada.to_string())
             self.mongo.close()
             return escola_atualizada
-        else:
-            self.mongo.close()
-            print("[!] Essa escola não existe.")
-            return None
+
+        self.mongo.close()
+        print("[!] Essa escola não existe.")
+        return None
 
     def excluir_escola(self):
         self.mongo.connect()
@@ -58,7 +85,13 @@ class ControllerEscola:
         if not self.verificar_existencia_escola(cnpj):
             df_escola = self.recuperar_escola(cnpj)
             self.mongo.db["escolas"].delete_one({"cnpj": cnpj})
-            escola_excluida = Escola(df_escola.cnpj.values[0], df_escola.nome.values[0], df_escola.nivel_ensino.values[0], df_escola.endereco.values[0], df_escola.telefone.values[0])
+            escola_excluida = Escola(
+                df_escola.cnpj.values[0],
+                df_escola.nome.values[0],
+                df_escola.nivel_ensino.values[0],
+                df_escola.endereco.values[0],
+                df_escola.telefone.values[0]
+            )
             self.mongo.close()
             print("[!] Escola removida.")
             print("[-]", escola_excluida.to_string())
@@ -66,7 +99,7 @@ class ControllerEscola:
             print("[!] Essa escola não existe.")
             self.mongo.close()
 
-    def verificar_existencia_escola(self, cnpj:str=None, external:bool=False) -> bool:
+    def verificar_existencia_escola(self, cnpj: str = None, external: bool = False) -> bool:
         if external:
             self.mongo.connect()
         df_escola = pd.DataFrame(self.mongo.db["escolas"].find({"cnpj": cnpj}))
@@ -74,7 +107,7 @@ class ControllerEscola:
             self.mongo.close()
         return df_escola.empty
 
-    def recuperar_escola(self, cnpj:str=None, external:bool=False) -> pd.DataFrame:
+    def recuperar_escola(self, cnpj: str = None, external: bool = False) -> pd.DataFrame:
         if external:
             self.mongo.connect()
         df_escola = pd.DataFrame(list(self.mongo.db["escolas"].find(

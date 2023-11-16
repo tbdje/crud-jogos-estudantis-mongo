@@ -53,7 +53,7 @@ class ControllerJogo:
         id_proximo_jogo = list(id_proximo_jogo)
 
         if not id_proximo_jogo:
-            id_proximo_jogo = [{"proximo_jogo": 0}]
+            id_proximo_jogo = 0
         else:
             id_proximo_jogo = id_proximo_jogo[0]["proximo_jogo"]
 
@@ -134,7 +134,31 @@ class ControllerJogo:
             return None
 
     def excluir_jogo(self):
-        pass
+        self.mongo.connect()
+
+        id_jogo_exclusao = int(input("Insira o ID do jogo que deseja excluir: "))
+
+        if not self.verificar_existencia_jogo(id_jogo_exclusao):
+            df_jogo = self.recuperar_jogo_id(id_jogo_exclusao)
+
+            confirmacao = input("Quer excluir o jogo? [sim/não]: ").lower()[0]
+
+            if confirmacao == "s":
+                self.mongo.db["jogos"].delete_one({"id_jogo": id_jogo_exclusao})
+
+                jogo_excluido = Jogo(
+                    df_jogo.id_jogo.values[0],
+                    datetime.strptime(df_jogo.data_hora.values[0], "%d/%m/%Y %H:%M"),
+                    self.validar_escola(df_jogo.cnpj.values[0])
+                )
+
+                self.mongo.close()
+                print("[!] Jogo removido.")
+                print("[-]", jogo_excluido.to_string())
+        else:
+            self.mongo.close()
+            print("[!] Esse jogo não existe.")
+            return None
 
     def verificar_existencia_jogo(self, id_jogo: int = None, external: bool = None):
         df_jogo = self.recuperar_jogo_id(id_jogo, external=external)

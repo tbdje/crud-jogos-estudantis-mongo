@@ -82,21 +82,95 @@ class ControllerTurma:
         return nova_turma
 
     def atualizar_turma(self) -> Turma:
-        pass
+        self.mongo.connect()
+
+        id_turma_alteracao = int(input("Insira o ID da turma para alterar: "))
+
+        if not self.verificar_existencia_turma(id_turma_alteracao):
+            nova_quantidade_alunos = int(input("Insira a nova quantidade de alunos: "))
+            self.mongo.db["turmas"].update_one(
+                {
+                    "id_turma": id_turma_alteracao
+                },
+                {
+                    "$set": {
+                        "quantidade_alunos": nova_quantidade_alunos
+                    }
+                }
+            )
+            df_turma = self.recuperar_turma_id(id_turma_alteracao)
+            escola = self.validar_escola(df_turma.cnpj.values[0])
+
+            turma_atualizada = Turma(
+                df_turma.id_turma.values[0],
+                df_turma.ano.values[0],
+                df_turma.quantidade_alunos.values[0],
+                escola
+            )
+
+            print("[^+]", turma_atualizada.to_string())
+            self.mongo.close()
+            return turma_atualizada
+        self.mongo.close()
+        print("[!] Essa turma não existe.")
+        return None
 
     def excluir_turma(self):
-        pass
+        self.mongo.connect()
 
-    def verificar_existencia_turma(self):
-        pass
+        id_turma_exclusao = int(input("Insira o ID da turma que deseja excluir: "))
 
-    def recuperar_turma(self, _id: int = None, external: bool = False):
+        if not self.verificar_existencia_turma(id_turma_exclusao):
+            df_turma = self.recuperar_turma_id(id_turma_exclusao)
+
+            confirmacao = input("Quer excluir a turma? [sim/não]: ").lower()[0]
+
+            if confirmacao == "s":
+                self.mongo.db["turmas"].delete_one(
+                    {
+                        "id_turma": id_turma_exclusao
+                    }
+                )
+
+                turma_excluida = Turma(
+                    df_turma.id_turma.values[0],
+                    df_turma.ano.values[0],
+                    df_turma.quantidade_alunos.values[0],
+                    self.validar_escola(df_turma.cnpj.values[0])
+                )
+
+                self.mongo.close()
+                print("[!] Turma removida.")
+                print("[-]", turma_excluida.to_string())
+        else:
+            self.mongo.close()
+            print("[!] Essa turma não existe.")
+            return None
+
+    def verificar_existencia_turma(self, id_turma: int = None, external: bool = False):
+        df_turma = self.recuperar_turma_id(id_turma, external=external)
+        return df_turma.empty
+
+    def recuperar_turma(self, _id: int = None):
+        df_turma = pd.DataFrame(list(
+            self.mongo.db["turmas"].find(
+                {
+                    "_id": _id
+                },
+                {
+                    "id_turma": 1, "ano": 1, "quantidade_alunos": 1, "cnpj": 1, "_id": 0
+                }
+            )
+        ))
+        return df_turma
+    
+    def recuperar_turma_id(self, id_turma: int = None, external: bool = None):
         if external:
             self.mongo.connect()
         df_turma = pd.DataFrame(list(
             self.mongo.db["turmas"].find(
                 {
-                    "_id": _id
+                    "id_turma": id_turma
                 },
                 {
                     "id_turma": 1, "ano": 1, "quantidade_alunos": 1, "cnpj": 1, "_id": 0

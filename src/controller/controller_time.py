@@ -7,15 +7,94 @@ from model.jogos import Jogo
 from controller.controller_turma import ControllerTurma
 from controller.controller_jogo import ControllerJogo
 
+from reports.relatorios import Relatorio
+
+import pandas as pd
+
 class ControllerTime:
 
     def __init__(self):
         self.mongo = MongoQueries()
         self.controller_turma = ControllerTurma()
         self.controller_jogo = ControllerJogo()
+        self.relatorio = Relatorio()
 
     def inserir_time(self) -> Time:
-        pass
+        self.mongo.connect()
+        self.relatorio.get_relatorio_turmas()
+
+        id_turma = int(input("Insira o ID da turma para o time: "))
+        turma = self.validar_turma(id_turma)
+
+        if turma is None:
+            return None
+        
+        self.relatorio.get_relatorio_jogos()
+
+        id_jogo = int(input("Insira o ID do jogo para o time: "))
+        jogo = self.validar_jogo(id_jogo)
+
+        if jogo is None:
+            return None
+        
+        id_proximo_time = self.mongo.db["times"].aggregate(
+            [
+                {
+                    "$group": {
+                        "_id": "$times",
+                        "proximo_time": {
+                            "$max": "$id_time"
+                        }
+                    }
+                },
+                {
+                    "$project": {
+                        "proximo_time": {
+                            "$sum": [
+                                "$proximo_time", 1
+                            ]
+                        },
+                        "_id": 0
+                    }
+                }
+            ]
+        )
+
+        id_proximo_time = list(id_proximo_time)
+
+        if not id_proximo_time:
+            id_proximo_time = 0
+        else:
+            id_proximo_time = id_proximo_time[0]["proximo_time"]
+
+        nome_time = input("Insira o nome do time: ").strip()
+        treinador = input("Insira o nome do treinador do time: ").strip()
+        categoria = input("Qual a categoria do time? [masculino/feminino]: ").strip()
+
+        dados_time = dict(
+            id_time=id_proximo_time,
+            nome=nome_time,
+            treinador=treinador,
+            categoria=categoria,
+            id_turma=id_turma,
+            id_jogo=id_jogo
+        )
+
+        time_inserido = self.mongo.db["times"].insert_one(dados_time)
+        df_time = self.recuperar_time(time_inserido.inserted_id)
+
+        novo_time = Time(
+            df_time.id_time.values[0],
+            df_time.nome.values[0],
+            df_time.treinador.values[0],
+            df_time.categoria.values[0],
+            turma,
+            jogo
+        )
+        
+        print("[+]", novo_time.to_string())
+        self.mongo.close()
+        return novo_time
 
     def atualizar_time(self) -> Time:
         pass
@@ -23,8 +102,43 @@ class ControllerTime:
     def excluir_time(self):
         pass
 
-    def verificar_existencia_time(self):
+    def verificar_existencia_turma(self):
         pass
 
-    def recuperar_time(self):
-        pass
+    def validar_jogo(self, id_jogo: int = None) -> Jogo:
+        if self.controller_jogo.verificar_existencia_jogo(id_jogo, external=True):
+            print("[!] Esse jogo não existe.")
+            return None
+        df_jogo = self.controller_jogo.recuperar_jogo_id(id_jogo, external=True)
+        jogo = Jogo(
+            df_jogo.id_jogo.values[0],
+            df_jogo.data_hora.values[0],
+            self.controller_jogo.validar_escola(df_jogo.cnpj.values[0])
+        )
+        return jogo
+
+    def validar_turma(self, id_turma: int = None) -> Turma:
+        if self.controller_turma.verificar_existencia_turma(id_turma, external=True):
+            print("[!] Essa turma não existe.")
+            return None
+        df_turma = self.controller_turma.recuperar_turma_id(id_turma, external=True)
+        turma = Turma(
+            df_turma.id_turma.values[0],
+            df_turma.ano.values[0],
+            df_turma.quantidade_alunos.values[0],
+            self.controller_turma.validar_escola(df_turma.cnpj.values[0])
+        )
+        return turma
+    
+    def recuperar_time(self, _id) -> pd.DataFrame:
+        df_time = pd.DataFrame(list(
+            self.mongo.db["times"].find(
+                {
+                    "_id": _id
+                },
+                {
+                    "id_time": 1, "nome": 1, "treinador": 1, "categoria": 1, "id_turma": 1, "id_jogo": 1, "_id": 0
+                }
+            )
+        ))
+        return df_time

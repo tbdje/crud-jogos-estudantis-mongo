@@ -97,13 +97,82 @@ class ControllerTime:
         return novo_time
 
     def atualizar_time(self) -> Time:
-        pass
+        self.mongo.connect()
+
+        id_time_alteracao = int(input("Insira o ID do time que deseja alterar: "))
+
+        if not self.verificar_existencia_time(id_time_alteracao):
+            nome_novo_treinador = input("Insira o nome do novo treinador: ").strip()
+
+            self.mongo.db["times"].update_one(
+                {
+                    "id_time": id_time_alteracao
+                },
+                {
+                    "$set": {
+                        "treinador": nome_novo_treinador
+                    }
+                }
+            )
+
+            df_time = self.recuperar_time_id(id_time_alteracao)
+
+            turma = self.validar_turma(int(df_time.id_turma.values[0]))
+            jogo = self.validar_jogo(int(df_time.id_jogo.values[0]))
+
+            time_alterado = Time(
+                df_time.id_time.values[0],
+                df_time.nome.values[0],
+                df_time.treinador.values[0],
+                df_time.categoria.values[0],
+                turma,
+                jogo
+            )
+
+            print("[^+]", time_alterado.to_string())
+            self.mongo.close()
+            return time_alterado
+        self.mongo.close()
+        print("[!] Esse time não existe.")
+        return None
 
     def excluir_time(self):
-        pass
+        self.mongo.connect()
 
-    def verificar_existencia_turma(self):
-        pass
+        id_time_exclusao = int(input("Insira o ID do time que deseja excluir: "))
+
+        if not self.verificar_existencia_time(id_time_exclusao):
+            df_time = self.recuperar_time_id(id_time_exclusao)
+
+            confirmacao = input("Deseja realmente apagar esse time? [sim/não]: ").lower()[0]
+
+            if confirmacao == "s":
+                self.mongo.db["times"].delete_one(
+                    {
+                        "id_time": id_time_exclusao
+                    }
+                )
+
+                time_excluido = Time(
+                    df_time.id_time.values[0],
+                    df_time.nome.values[0],
+                    df_time.treinador.values[0],
+                    df_time.categoria.values[0],
+                    self.validar_turma(int(df_time.id_turma.values[0])),
+                    self.validar_jogo(int(df_time.id_jogo.values[0]))
+                )
+
+                self.mongo.close()
+                print("[!] Time excluído.")
+                print("[-]", time_excluido.to_string())
+        else:
+            self.mongo.close()
+            print("[!] Esse time não existe.")
+            return None
+
+    def verificar_existencia_time(self, id_time: int = None, external: bool = None):
+        df_time = self.recuperar_time_id(id_time, external=external)
+        return df_time.empty
 
     def validar_jogo(self, id_jogo: int = None) -> Jogo:
         if self.controller_jogo.verificar_existencia_jogo(id_jogo, external=True):
@@ -130,6 +199,23 @@ class ControllerTime:
         )
         return turma
     
+    def recuperar_time_id(self, id_time: int = None, external: bool = None):
+        if external:
+            self.mongo.connect()
+        df_time = pd.DataFrame(list(
+            self.mongo.db["times"].find(
+                {
+                    "id_time": id_time
+                },
+                {
+                    "id_time": 1, "nome": 1, "treinador": 1, "categoria": 1, "id_turma": 1, "id_jogo": 1, "_id": 0
+                }
+            )
+        ))
+        if external:
+            self.mongo.close()
+        return df_time
+
     def recuperar_time(self, _id) -> pd.DataFrame:
         df_time = pd.DataFrame(list(
             self.mongo.db["times"].find(

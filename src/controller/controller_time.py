@@ -110,41 +110,47 @@ class ControllerTime:
     def atualizar_time(self) -> Time:
         self.mongo.connect()
 
-        id_time_alteracao = int(input("Insira o ID do time que deseja alterar: "))
+        while True:
+            id_time_alteracao = int(input("Insira o ID do time que deseja alterar: "))
 
-        if not self.verificar_existencia_time(id_time_alteracao):
-            nome_novo_treinador = input("Insira o nome do novo treinador: ").strip()
+            if not self.verificar_existencia_time(id_time_alteracao):
+                nome_novo_treinador = input("Insira o nome do novo treinador: ").strip()
 
-            self.mongo.db["times"].update_one(
-                {
-                    "id_time": id_time_alteracao
-                },
-                {
-                    "$set": {
-                        "treinador": nome_novo_treinador
+                self.mongo.db["times"].update_one(
+                    {
+                        "id_time": id_time_alteracao
+                    },
+                    {
+                        "$set": {
+                            "treinador": nome_novo_treinador
+                        }
                     }
-                }
-            )
+                )
 
-            df_time = self.recuperar_time_id(id_time_alteracao)
+                df_time = self.recuperar_time_id(id_time_alteracao)
 
-            turma = self.validar_turma(int(df_time.id_turma.values[0]))
-            jogo = self.validar_jogo(int(df_time.id_jogo.values[0]))
+                turma = self.validar_turma(int(df_time.id_turma.values[0]))
+                jogo = self.validar_jogo(int(df_time.id_jogo.values[0]))
 
-            time_alterado = Time(
-                df_time.id_time.values[0],
-                df_time.nome.values[0],
-                df_time.treinador.values[0],
-                df_time.categoria.values[0],
-                turma,
-                jogo
-            )
+                time_alterado = Time(
+                    df_time.id_time.values[0],
+                    df_time.nome.values[0],
+                    df_time.treinador.values[0],
+                    df_time.categoria.values[0],
+                    turma,
+                    jogo
+                )
 
-            print("[^+]", time_alterado.to_string())
-            self.mongo.close()
-            return time_alterado
+                print("[^+]", time_alterado.to_string())
+
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Times? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Esse time não existe.")
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Times? [sim/não]: ").lower()[0]
+
+            if continuar_atualizando == "n":
+                break
         self.mongo.close()
-        print("[!] Esse time não existe.")
         return None
 
     def excluir_time(self):

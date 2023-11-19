@@ -7,6 +7,81 @@ class Relatorio:
     def __init__(self):
         pass
 
+    def get_relatorio_numero_jogos(self):
+        mongo = MongoQueries()
+        mongo.connect()
+        numero_jogos = mongo.db["escolas"].aggregate(
+            [
+                {
+                    "$lookup": {
+                        "from": "jogos",
+                        "localField": "cnpj",
+                        "foreignField": "cnpj",
+                        "as": "jogos"
+                    }
+                },
+                {
+                    "$project": {
+                        "nome_escola": "$nome",
+                        "numero_jogos": { "$size": "$jogos" }
+                    }
+                },
+                {
+                    "$group": {
+                        "_id": "$nome_escola",
+                        "numero_jogos": { "$sum": "$numero_jogos" }
+                    }
+                },
+                {
+                    "$sort": {"numero_jogos": -1}
+                },
+                {
+                    "$project": {
+                        "_id": 0,
+                        "nome_escola": "$_id",
+                        "numero_jogos": "$numero_jogos"
+                    }
+                }
+            ]
+        )
+        df_numero_jogos = pd.DataFrame(list(numero_jogos))
+        mongo.close()
+        print(df_numero_jogos)
+        input("Pressione [Enter] para sair do relatório de número de jogos...")
+
+    def get_relatorio_time_jogadores(self):
+        mongo = MongoQueries()
+        mongo.connect()
+        time_jogadores = mongo.db["times"].aggregate(
+                [
+                    {
+                        "$lookup": {
+                            "from": "jogadores",
+                            "localField": "id_time",
+                            "foreignField": "id_time",
+                            "as": "jogadores"
+                        }
+                    },
+                    {
+                        "$unwind": "$jogadores"
+                    },
+                    {
+                        "$project": {
+                            "_id": 0,
+                            "nome_jogador": "$jogadores.nome",
+                            "posicao": "$jogadores.posicao",
+                            "numero_camisa": "$jogadores.numero_camisa",
+                            "nome_time": "$nome",
+                            "categoria": "$categoria"
+                        }
+                    }
+            ]
+        )
+        df_time_jogadores = pd.DataFrame(list(time_jogadores))
+        mongo.close()
+        print(df_time_jogadores)
+        input("Pressione [Enter] para sair do relatório de times e jogadores...")
+
     def get_relatorio_escolas(self):  # OK
         mongo = MongoQueries()
         mongo.connect()

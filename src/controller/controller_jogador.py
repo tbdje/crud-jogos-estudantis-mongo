@@ -71,41 +71,47 @@ class ControllerJogador:
     def atualizar_jogador(self) -> Jogador:
         self.mongo.connect()
 
-        cpf_jogador = input("Insira o CPF do jogador a ser alterado [somente os números]: ").strip()
+        while True:
+            cpf_jogador = input("Insira o CPF do jogador a ser alterado [somente os números]: ").strip()
 
-        if not self.verificar_existencia_jogador(cpf_jogador):
-            nova_posicao = input("Insira a nova posicao do jogador: ").strip()
-            novo_numero = input("Insira o novo número da camisa: ").strip()
+            if not self.verificar_existencia_jogador(cpf_jogador):
+                nova_posicao = input("Insira a nova posicao do jogador: ").strip()
+                novo_numero = input("Insira o novo número da camisa: ").strip()
 
-            self.mongo.db["jogadores"].update_one(
-                {
-                    "cpf": cpf_jogador
-                },
-                {
-                    "$set": {
-                        "posicao": nova_posicao,
-                        "numero_camisa": novo_numero
+                self.mongo.db["jogadores"].update_one(
+                    {
+                        "cpf": cpf_jogador
+                    },
+                    {
+                        "$set": {
+                            "posicao": nova_posicao,
+                            "numero_camisa": novo_numero
+                        }
                     }
-                }
-            )
+                )
 
-            df_jogador = self.recuperar_jogador_cpf(cpf_jogador)
-            time = self.validar_time(int(df_jogador.id_time.values[0]))
+                df_jogador = self.recuperar_jogador_cpf(cpf_jogador)
+                time = self.validar_time(int(df_jogador.id_time.values[0]))
 
-            jogador_atualizado = Jogador(
-                df_jogador.cpf.values[0],
-                df_jogador.nome.values[0],
-                df_jogador.idade.values[0],
-                df_jogador.posicao.values[0],
-                df_jogador.numero_camisa.values[0],
-                time
-            )
+                jogador_atualizado = Jogador(
+                    df_jogador.cpf.values[0],
+                    df_jogador.nome.values[0],
+                    df_jogador.idade.values[0],
+                    df_jogador.posicao.values[0],
+                    df_jogador.numero_camisa.values[0],
+                    time
+                )
 
-            print("[^+]", jogador_atualizado.to_string())
-            self.mongo.close()
-            return jogador_atualizado
+                print("[^+]", jogador_atualizado.to_string())
+
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Jogadores? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Esse jogador não existe.")
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Jogadores? [sim/não]: ").lower()[0]
+
+            if continuar_atualizando == "n":
+                break
         self.mongo.close()
-        print("[!] Esse jogador não existe.")
         return None
 
     def excluir_jogador(self):

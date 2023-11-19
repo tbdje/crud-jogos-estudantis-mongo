@@ -100,47 +100,52 @@ class ControllerJogo:
     def atualizar_jogo(self) -> Jogo:
         self.mongo.connect()
 
-        id_jogo_alteracao = int(input("Insira o ID do jogo para alterar: ").strip())
+        while True:
+            id_jogo_alteracao = int(input("Insira o ID do jogo para alterar: ").strip())
 
-        if not self.verificar_existencia_jogo(id_jogo_alteracao):
-            nova_data = input("Insira a nova data do jogo [dia/mes/ano]: ").strip()
-            novo_horario = input("Insira o novo horário [hora:minuto]: ").strip()
+            if not self.verificar_existencia_jogo(id_jogo_alteracao):
+                nova_data = input("Insira a nova data do jogo [dia/mes/ano]: ").strip()
+                novo_horario = input("Insira o novo horário [hora:minuto]: ").strip()
 
-            nova_data = list(map(int, nova_data.split("/")))
-            novo_horario = list(map(int, novo_horario.split(":")))
+                nova_data = list(map(int, nova_data.split("/")))
+                novo_horario = list(map(int, novo_horario.split(":")))
 
-            nova_data_hora = datetime(
-                year=nova_data[2],
-                month=nova_data[1],
-                day=nova_data[0],
-                hour=novo_horario[0],
-                minute=novo_horario[1]
-            )
+                nova_data_hora = datetime(
+                    year=nova_data[2],
+                    month=nova_data[1],
+                    day=nova_data[0],
+                    hour=novo_horario[0],
+                    minute=novo_horario[1]
+                )
 
-            self.mongo.db["jogos"].update_one(
-                {
-                    "id_jogo": id_jogo_alteracao
-                },
-                {
-                    "$set": {
-                        "data_hora": nova_data_hora.strftime("%d/%m/%Y %H:%M")
+                self.mongo.db["jogos"].update_one(
+                    {
+                        "id_jogo": id_jogo_alteracao
+                    },
+                    {
+                        "$set": {
+                            "data_hora": nova_data_hora.strftime("%d/%m/%Y %H:%M")
+                        }
                     }
-                }
-            )
+                )
 
-            df_jogo = self.recuperar_jogo_id(id_jogo_alteracao)
-            escola = self.validar_escola(df_jogo.cnpj.values[0])
+                df_jogo = self.recuperar_jogo_id(id_jogo_alteracao)
+                escola = self.validar_escola(df_jogo.cnpj.values[0])
 
-            jogo_atualizado = Jogo(df_jogo.id_jogo.values[0], nova_data_hora, escola)
+                jogo_atualizado = Jogo(df_jogo.id_jogo.values[0], nova_data_hora, escola)
 
-            print("[^+]", jogo_atualizado.to_string())
-            self.mongo.close()
+                print("[^+]", jogo_atualizado.to_string())
+                
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Jogos? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Esse jogo não existe.")
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Jogos? [sim/não]: ").lower()[0]
 
-            return jogo_atualizado
-        else:
-            self.mongo.close()
-            print("[!] Esse jogo não existe.")
-            return None
+            if continuar_atualizando == "n":
+                break
+
+        self.mongo.close()
+        return None
 
     def excluir_jogo(self):
         self.mongo.connect()

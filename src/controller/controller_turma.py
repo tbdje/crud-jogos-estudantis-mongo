@@ -93,35 +93,42 @@ class ControllerTurma:
     def atualizar_turma(self) -> Turma:
         self.mongo.connect()
 
-        id_turma_alteracao = int(input("Insira o ID da turma para alterar: "))
+        while True:
+            id_turma_alteracao = int(input("Insira o ID da turma para alterar: "))
 
-        if not self.verificar_existencia_turma(id_turma_alteracao):
-            nova_quantidade_alunos = int(input("Insira a nova quantidade de alunos: "))
-            self.mongo.db["turmas"].update_one(
-                {
-                    "id_turma": id_turma_alteracao
-                },
-                {
-                    "$set": {
-                        "quantidade_alunos": nova_quantidade_alunos
+            if not self.verificar_existencia_turma(id_turma_alteracao):
+                nova_quantidade_alunos = int(input("Insira a nova quantidade de alunos: "))
+                self.mongo.db["turmas"].update_one(
+                    {
+                        "id_turma": id_turma_alteracao
+                    },
+                    {
+                        "$set": {
+                            "quantidade_alunos": nova_quantidade_alunos
+                        }
                     }
-                }
-            )
-            df_turma = self.recuperar_turma_id(id_turma_alteracao)
-            escola = self.validar_escola(df_turma.cnpj.values[0])
+                )
+                df_turma = self.recuperar_turma_id(id_turma_alteracao)
+                escola = self.validar_escola(df_turma.cnpj.values[0])
 
-            turma_atualizada = Turma(
-                df_turma.id_turma.values[0],
-                df_turma.ano.values[0],
-                df_turma.quantidade_alunos.values[0],
-                escola
-            )
+                turma_atualizada = Turma(
+                    df_turma.id_turma.values[0],
+                    df_turma.ano.values[0],
+                    df_turma.quantidade_alunos.values[0],
+                    escola
+                )
 
-            print("[^+]", turma_atualizada.to_string())
-            self.mongo.close()
-            return turma_atualizada
+                print("[^+]", turma_atualizada.to_string())
+
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Turmas? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Essa turma não existe.")
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Turmas? [sim/não]: ").lower()[0]
+
+            if continuar_atualizando == "n":
+                break
+            
         self.mongo.close()
-        print("[!] Essa turma não existe.")
         return None
 
     def excluir_turma(self):

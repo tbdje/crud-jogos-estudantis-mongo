@@ -8,6 +8,8 @@ from reports.relatorios import Relatorio
 
 import pandas as pd
 
+from utils.config import clear_console
+
 class ControllerJogador:
 
     def __init__(self):
@@ -17,46 +19,53 @@ class ControllerJogador:
 
     def inserir_jogador(self) -> Jogador:
         self.mongo.connect()
-        self.relatorio.get_relatorio_times()
 
-        id_time = int(input("Insira o ID do time para o jogador: "))
+        while True:
+            clear_console(0.5)
+            self.relatorio.get_relatorio_times()
 
-        time = self.validar_time(id_time)
+            id_time = int(input("Insira o ID do time para o jogador: "))
+            time = self.validar_time(id_time)
 
-        if time is None:
-            return None
-        
-        cpf_jogador = input("Insira o CPF do jogador [apenas os números]: ").strip()
-        nome = input("Nome do jogador: ").strip()
-        idade = int(input("Idade do jogador: "))
-        posicao = input("Posição do jogador: ").strip()
-        numero_camisa = int(input("Número da camisa: "))
-        
-        dados_jogador = dict(
-            cpf=cpf_jogador,
-            nome=nome,
-            idade=idade,
-            posicao=posicao,
-            numero_camisa=numero_camisa,
-            id_time=id_time
-        )
+            if time is None:
+                continue
+            
+            cpf_jogador = input("Insira o CPF do jogador [apenas os números]: ").strip()
+            nome = input("Nome do jogador: ").strip()
+            idade = int(input("Idade do jogador: "))
+            posicao = input("Posição do jogador: ").strip()
+            numero_camisa = int(input("Número da camisa: "))
+            
+            dados_jogador = dict(
+                cpf=cpf_jogador,
+                nome=nome,
+                idade=idade,
+                posicao=posicao,
+                numero_camisa=numero_camisa,
+                id_time=id_time
+            )
 
-        jogador_inserido = self.mongo.db["jogadores"].insert_one(dados_jogador)
+            jogador_inserido = self.mongo.db["jogadores"].insert_one(dados_jogador)
+            df_jogador = self.recuperar_jogador(jogador_inserido.inserted_id)
 
-        df_jogador = self.recuperar_jogador(jogador_inserido.inserted_id)
+            novo_jogador = Jogador(
+                df_jogador.cpf.values[0],
+                df_jogador.nome.values[0],
+                df_jogador.idade.values[0],
+                df_jogador.posicao.values[0],
+                df_jogador.numero_camisa.values[0],
+                time
+            )
 
-        novo_jogador = Jogador(
-            df_jogador.cpf.values[0],
-            df_jogador.nome.values[0],
-            df_jogador.idade.values[0],
-            df_jogador.posicao.values[0],
-            df_jogador.numero_camisa.values[0],
-            time
-        )
+            print("[+]", novo_jogador.to_string())
 
-        print("[+]", novo_jogador.to_string())
+            continuar_insercao = input("\n[?] Gostaria de continuar inserindo Jogadores? [sim/não]: ").lower()[0]
+
+            if continuar_insercao == "n":
+                break
+
         self.mongo.close()
-        return novo_jogador
+        return None
 
 
     def atualizar_jogador(self) -> Jogador:

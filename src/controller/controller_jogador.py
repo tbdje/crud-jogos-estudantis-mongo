@@ -72,6 +72,7 @@ class ControllerJogador:
         self.mongo.connect()
 
         while True:
+            clear_console(0.5)
             cpf_jogador = input("Insira o CPF do jogador a ser alterado [somente os números]: ").strip()
 
             if not self.verificar_existencia_jogador(cpf_jogador):

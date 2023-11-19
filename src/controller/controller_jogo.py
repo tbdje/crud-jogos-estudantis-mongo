@@ -101,6 +101,7 @@ class ControllerJogo:
         self.mongo.connect()
 
         while True:
+            clear_console(0.5)
             id_jogo_alteracao = int(input("Insira o ID do jogo para alterar: ").strip())
 
             if not self.verificar_existencia_jogo(id_jogo_alteracao):

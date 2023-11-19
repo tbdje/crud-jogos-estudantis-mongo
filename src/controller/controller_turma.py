@@ -94,6 +94,7 @@ class ControllerTurma:
         self.mongo.connect()
 
         while True:
+            clear_console(0.5)
             id_turma_alteracao = int(input("Insira o ID da turma para alterar: "))
 
             if not self.verificar_existencia_turma(id_turma_alteracao):

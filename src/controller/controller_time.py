@@ -111,6 +111,7 @@ class ControllerTime:
         self.mongo.connect()
 
         while True:
+            clear_console(0.5)
             id_time_alteracao = int(input("Insira o ID do time que deseja alterar: "))
 
             if not self.verificar_existencia_time(id_time_alteracao):

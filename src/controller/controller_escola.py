@@ -58,6 +58,7 @@ class ControllerEscola:
         self.mongo.connect()
 
         while True:
+            clear_console(0.5)
             cnpj = input("Insira o CNPJ da escola para alteração de telefone: ").strip()
 
             if not self.verificar_existencia_escola(cnpj):

@@ -9,7 +9,7 @@ class ControllerEscola:
     def __init__(self):
         self.mongo = MongoQueries()
 
-    def inserir_escola(self) -> Escola:
+    def inserir_escola(self):
         self.mongo.connect()
 
         while True:
@@ -54,35 +54,41 @@ class ControllerEscola:
         self.mongo.close()
         return None
 
-    def atualizar_escola(self) -> Escola:
+    def atualizar_escola(self):
         self.mongo.connect()
 
-        cnpj = input("Insira o CNPJ da escola para alteração de telefone: ").strip()
+        while True:
+            cnpj = input("Insira o CNPJ da escola para alteração de telefone: ").strip()
 
-        if not self.verificar_existencia_escola(cnpj):
-            novo_telefone = input("Novo telefone: ").strip()
-            self.mongo.db["escolas"].update_one(
-                {
-                    "cnpj": cnpj
-                },
-                {
-                    "$set": {"telefone": novo_telefone}
-                }
-            )
-            df_escola = self.recuperar_escola(cnpj)
-            escola_atualizada = Escola(
-                df_escola.cnpj.values[0],
-                df_escola.nome.values[0],
-                df_escola.nivel_ensino.values[0],
-                df_escola.endereco.values[0],
-                df_escola.telefone.values[0]
-            )
-            print("[^+]", escola_atualizada.to_string())
-            self.mongo.close()
-            return escola_atualizada
+            if not self.verificar_existencia_escola(cnpj):
+                novo_telefone = input("Novo telefone: ").strip()
+                self.mongo.db["escolas"].update_one(
+                    {
+                        "cnpj": cnpj
+                    },
+                    {
+                        "$set": {"telefone": novo_telefone}
+                    }
+                )
+                df_escola = self.recuperar_escola(cnpj)
+                escola_atualizada = Escola(
+                    df_escola.cnpj.values[0],
+                    df_escola.nome.values[0],
+                    df_escola.nivel_ensino.values[0],
+                    df_escola.endereco.values[0],
+                    df_escola.telefone.values[0]
+                )
+                print("[^+]", escola_atualizada.to_string())
+
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Escolas? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Essa escola não existe.")
+                continuar_atualizando = input("\n[?] Gostaria de continuar atualizando Escolas? [sim/não]: ").lower()[0]
+
+            if continuar_atualizando == "n":
+                break
 
         self.mongo.close()
-        print("[!] Essa escola não existe.")
         return None
 
     def excluir_escola(self):

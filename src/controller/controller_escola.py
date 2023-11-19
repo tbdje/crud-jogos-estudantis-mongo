@@ -2,6 +2,8 @@ import pandas as pd
 from conexion.mongo_queries import MongoQueries
 from model.escolas import Escola
 
+from utils.config import clear_console
+
 class ControllerEscola:
 
     def __init__(self):
@@ -10,40 +12,46 @@ class ControllerEscola:
     def inserir_escola(self) -> Escola:
         self.mongo.connect()
 
-        cnpj = input("Insira o CNPJ novo: ").strip()
+        while True:
+            clear_console(0.5)
+            cnpj = input("Insira o CNPJ novo: ").strip()
 
-        if self.verificar_existencia_escola(cnpj):
-            nome_escola = input("Nome da escola nova: ").strip()
-            nivel = input("Nível de ensino da escola: ").strip()
-            endereco = input("Endereço: ").strip()
-            telefone = input("Telefone da escola: ").strip()
+            if self.verificar_existencia_escola(cnpj):
+                nome_escola = input("Nome da escola nova: ").strip()
+                nivel = input("Nível de ensino da escola: ").strip()
+                endereco = input("Endereço: ").strip()
+                telefone = input("Telefone da escola: ").strip()
 
-            self.mongo.db["escolas"].insert_one(
-                {
-                    "cnpj": cnpj,
-                    "nome": nome_escola,
-                    "nivel_ensino": nivel,
-                    "endereco": endereco,
-                    "telefone": telefone
-                }
-            )
+                self.mongo.db["escolas"].insert_one(
+                    {
+                        "cnpj": cnpj,
+                        "nome": nome_escola,
+                        "nivel_ensino": nivel,
+                        "endereco": endereco,
+                        "telefone": telefone
+                    }
+                )
 
-            df_escola = self.recuperar_escola(cnpj)
-            nova_escola = Escola(
-                df_escola.cnpj.values[0],
-                df_escola.nome.values[0],
-                df_escola.nivel_ensino.values[0],
-                df_escola.endereco.values[0],
-                df_escola.telefone.values[0]
-            )
+                df_escola = self.recuperar_escola(cnpj)
+                nova_escola = Escola(
+                    df_escola.cnpj.values[0],
+                    df_escola.nome.values[0],
+                    df_escola.nivel_ensino.values[0],
+                    df_escola.endereco.values[0],
+                    df_escola.telefone.values[0]
+                )
 
-            print("[+]", nova_escola.to_string())
+                print("[+]", nova_escola.to_string())
 
-            self.mongo.close()
-            return nova_escola
+                continuar_insercao = input("\n[?] Gostaria de continuar inserindo Escolas? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Essa escola já está cadastrada.")
+                continuar_insercao = input("\n[?] Gostaria de continuar inserindo Escolas? [sim/não]: ").lower()[0]
+
+            if continuar_insercao == "n":
+                break
 
         self.mongo.close()
-        print("[!] Essa escola já está cadastrada.")
         return None
 
     def atualizar_escola(self) -> Escola:

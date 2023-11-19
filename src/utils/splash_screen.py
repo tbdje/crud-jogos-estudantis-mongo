@@ -3,7 +3,7 @@ from utils import config
 class SplashScreen:
 
     def __init__(self):
-        self.created_by = "Felipe L. Nunes, Rafael Pereira,\n Ramiro Biazatti, Amanda de Moraes, Pedro Pimentel e Marciel Jastrow."
+        self.created_by = "Felipe L. Nunes, Rafael Pereira,\n Ramiro Biazatti, Amanda de Moraes,\n Pedro Pimentel e Marciel Jastrow."
         self.professor = "Prof. M.Sc. Howard Roatti"
         self.disciplina = "Banco de Dados"
         self.semestre = "2023/2"

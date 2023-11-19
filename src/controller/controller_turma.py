@@ -8,6 +8,8 @@ from reports.relatorios import Relatorio
 
 import pandas as pd
 
+from utils.config import clear_console
+
 class ControllerTurma:
 
     def __init__(self):
@@ -17,69 +19,76 @@ class ControllerTurma:
 
     def inserir_turma(self) -> Turma:
         self.mongo.connect()
-        self.relatorio.get_relatorio_escolas()
 
-        cnpj_escola = input("Insira o CNPJ da escola para a turma: ").strip()
-        escola = self.validar_escola(cnpj_escola)
+        while True:
+            clear_console(0.5)
+            self.relatorio.get_relatorio_escolas()
 
-        if escola is None:
-            return None
-        
-        id_proxima_turma = self.mongo.db["turmas"].aggregate(
-            [
-                {
-                    "$group": {
-                        "_id": "$turmas",
-                        "proxima_turma": {
-                            "$max": "$id_turma"
+            cnpj_escola = input("Insira o CNPJ da escola para a turma: ").strip()
+            escola = self.validar_escola(cnpj_escola)
+
+            if escola is None:
+                continue
+            
+            id_proxima_turma = self.mongo.db["turmas"].aggregate(
+                [
+                    {
+                        "$group": {
+                            "_id": "$turmas",
+                            "proxima_turma": {
+                                "$max": "$id_turma"
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "proxima_turma": {
+                                "$sum": [
+                                    "$proxima_turma", 1
+                                ]
+                            },
+                            "_id": 0
                         }
                     }
-                },
-                {
-                    "$project": {
-                        "proxima_turma": {
-                            "$sum": [
-                                "$proxima_turma", 1
-                            ]
-                        },
-                        "_id": 0
-                    }
-                }
-            ]
-        )
+                ]
+            )
 
-        id_proxima_turma = list(id_proxima_turma)
+            id_proxima_turma = list(id_proxima_turma)
 
-        if not id_proxima_turma:
-            id_proxima_turma = 0
-        else:
-            id_proxima_turma = id_proxima_turma[0]["proxima_turma"]
+            if not id_proxima_turma:
+                id_proxima_turma = 0
+            else:
+                id_proxima_turma = id_proxima_turma[0]["proxima_turma"]
 
-        ano = input("Insira o ano da turma [Ex: 3A]: ").strip()
-        quantidade_alunos = int(input("Insira a quantidade de alunos da turma: "))
-        
-        dados_nova_turma = dict(
-            id_turma=id_proxima_turma,
-            ano=ano,
-            quantidade_alunos=quantidade_alunos,
-            cnpj=cnpj_escola
-        )
+            ano = input("Insira o ano da turma [Ex: 3A]: ").strip()
+            quantidade_alunos = int(input("Insira a quantidade de alunos da turma: "))
+            
+            dados_nova_turma = dict(
+                id_turma=id_proxima_turma,
+                ano=ano,
+                quantidade_alunos=quantidade_alunos,
+                cnpj=cnpj_escola
+            )
 
-        id_turma_inserida = self.mongo.db["turmas"].insert_one(dados_nova_turma)
-        df_turma = self.recuperar_turma(id_turma_inserida.inserted_id)
+            id_turma_inserida = self.mongo.db["turmas"].insert_one(dados_nova_turma)
+            df_turma = self.recuperar_turma(id_turma_inserida.inserted_id)
 
-        print(df_turma)
+            nova_turma = Turma(
+                df_turma.id_turma.values[0],
+                df_turma.ano.values[0],
+                df_turma.quantidade_alunos.values[0],
+                escola
+            )
 
-        nova_turma = Turma(
-            df_turma.id_turma.values[0],
-            df_turma.ano.values[0],
-            df_turma.quantidade_alunos.values[0],
-            escola
-        )
+            print("[+]", nova_turma.to_string())
 
-        print("[+]", nova_turma.to_string())
+            continuar_insercao = input("\n[?] Gostaria de continuar inserindo Turmas? [sim/não]: ").lower()[0]
+
+            if continuar_insercao == "n":
+                break
+
         self.mongo.close()
-        return nova_turma
+        return None
 
     def atualizar_turma(self) -> Turma:
         self.mongo.connect()

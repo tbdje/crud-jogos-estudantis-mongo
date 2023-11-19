@@ -11,6 +11,8 @@ from reports.relatorios import Relatorio
 
 import pandas as pd
 
+from utils.config import clear_console
+
 class ControllerTime:
 
     def __init__(self):
@@ -21,78 +23,87 @@ class ControllerTime:
 
     def inserir_time(self) -> Time:
         self.mongo.connect()
-        self.relatorio.get_relatorio_turmas()
 
-        id_turma = int(input("Insira o ID da turma para o time: "))
-        turma = self.validar_turma(id_turma)
+        while True:
+            clear_console(0.5)
+            self.relatorio.get_relatorio_turmas()
 
-        if turma is None:
-            return None
-        
-        self.relatorio.get_relatorio_jogos()
+            id_turma = int(input("Insira o ID da turma para o time: "))
+            turma = self.validar_turma(id_turma)
 
-        id_jogo = int(input("Insira o ID do jogo para o time: "))
-        jogo = self.validar_jogo(id_jogo)
+            if turma is None:
+                continue
+            
+            self.relatorio.get_relatorio_jogos()
 
-        if jogo is None:
-            return None
-        
-        id_proximo_time = self.mongo.db["times"].aggregate(
-            [
-                {
-                    "$group": {
-                        "_id": "$times",
-                        "proximo_time": {
-                            "$max": "$id_time"
+            id_jogo = int(input("Insira o ID do jogo para o time: "))
+            jogo = self.validar_jogo(id_jogo)
+
+            if jogo is None:
+                continue
+            
+            id_proximo_time = self.mongo.db["times"].aggregate(
+                [
+                    {
+                        "$group": {
+                            "_id": "$times",
+                            "proximo_time": {
+                                "$max": "$id_time"
+                            }
+                        }
+                    },
+                    {
+                        "$project": {
+                            "proximo_time": {
+                                "$sum": [
+                                    "$proximo_time", 1
+                                ]
+                            },
+                            "_id": 0
                         }
                     }
-                },
-                {
-                    "$project": {
-                        "proximo_time": {
-                            "$sum": [
-                                "$proximo_time", 1
-                            ]
-                        },
-                        "_id": 0
-                    }
-                }
-            ]
-        )
+                ]
+            )
 
-        id_proximo_time = list(id_proximo_time)
+            id_proximo_time = list(id_proximo_time)
 
-        if not id_proximo_time:
-            id_proximo_time = 0
-        else:
-            id_proximo_time = id_proximo_time[0]["proximo_time"]
+            if not id_proximo_time:
+                id_proximo_time = 0
+            else:
+                id_proximo_time = id_proximo_time[0]["proximo_time"]
 
-        nome_time = input("Insira o nome do time: ").strip()
-        treinador = input("Insira o nome do treinador do time: ").strip()
-        categoria = input("Qual a categoria do time? [masculino/feminino]: ").strip()
+            nome_time = input("Insira o nome do time: ").strip()
+            treinador = input("Insira o nome do treinador do time: ").strip()
+            categoria = input("Qual a categoria do time? [masculino/feminino]: ").strip()
 
-        dados_time = dict(
-            id_time=id_proximo_time,
-            nome=nome_time,
-            treinador=treinador,
-            categoria=categoria,
-            id_turma=id_turma,
-            id_jogo=id_jogo
-        )
+            dados_time = dict(
+                id_time=id_proximo_time,
+                nome=nome_time,
+                treinador=treinador,
+                categoria=categoria,
+                id_turma=id_turma,
+                id_jogo=id_jogo
+            )
 
-        time_inserido = self.mongo.db["times"].insert_one(dados_time)
-        df_time = self.recuperar_time(time_inserido.inserted_id)
+            time_inserido = self.mongo.db["times"].insert_one(dados_time)
+            df_time = self.recuperar_time(time_inserido.inserted_id)
 
-        novo_time = Time(
-            df_time.id_time.values[0],
-            df_time.nome.values[0],
-            df_time.treinador.values[0],
-            df_time.categoria.values[0],
-            turma,
-            jogo
-        )
-        
-        print("[+]", novo_time.to_string())
+            novo_time = Time(
+                df_time.id_time.values[0],
+                df_time.nome.values[0],
+                df_time.treinador.values[0],
+                df_time.categoria.values[0],
+                turma,
+                jogo
+            )
+
+            print("[+]", novo_time.to_string())
+
+            continuar_insercao = input("\n[?] Gostaria de continuar inserindo Times? [sim/não]: ").lower()[0]
+
+            if continuar_insercao == "n":
+                break
+
         self.mongo.close()
         return novo_time
 

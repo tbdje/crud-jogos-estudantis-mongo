@@ -101,7 +101,6 @@ class ControllerJogo:
         self.mongo.connect()
 
         while True:
-            clear_console(0.5)
             id_jogo_alteracao = int(input("Insira o ID do jogo para alterar: ").strip())
 
             if not self.verificar_existencia_jogo(id_jogo_alteracao):
@@ -151,29 +150,41 @@ class ControllerJogo:
     def excluir_jogo(self):
         self.mongo.connect()
 
-        id_jogo_exclusao = int(input("Insira o ID do jogo que deseja excluir: "))
+        while True:
+            id_jogo_exclusao = int(input("Insira o ID do jogo que deseja excluir: "))
 
-        if not self.verificar_existencia_jogo(id_jogo_exclusao):
-            df_jogo = self.recuperar_jogo_id(id_jogo_exclusao)
+            if not self.verificar_existencia_jogo(id_jogo_exclusao):
+                df_jogo = self.recuperar_jogo_id(id_jogo_exclusao)
 
-            confirmacao = input("Quer excluir o jogo? [sim/não]: ").lower()[0]
+                confirmacao = input("Todos os documentos relacionados a esse jogo serão removidos, quer continuar? [sim/não]: ").lower()[0]
 
-            if confirmacao == "s":
-                self.mongo.db["jogos"].delete_one({"id_jogo": id_jogo_exclusao})
+                if confirmacao == "s":
+                    self.deletar_times_relacionados(id_jogo_exclusao)
+                    
+                    self.mongo.db["jogos"].delete_one({"id_jogo": id_jogo_exclusao})
 
-                jogo_excluido = Jogo(
-                    df_jogo.id_jogo.values[0],
-                    datetime.strptime(df_jogo.data_hora.values[0], "%d/%m/%Y %H:%M"),
-                    self.validar_escola(df_jogo.cnpj.values[0])
-                )
+                    jogo_excluido = Jogo(
+                        df_jogo.id_jogo.values[0],
+                        datetime.strptime(df_jogo.data_hora.values[0], "%d/%m/%Y %H:%M"),
+                        self.validar_escola(df_jogo.cnpj.values[0])
+                    )
+                    print("[!] Jogo removido.")
+                    print("[-]", jogo_excluido.to_string())
 
-                self.mongo.close()
-                print("[!] Jogo removido.")
-                print("[-]", jogo_excluido.to_string())
-        else:
-            self.mongo.close()
-            print("[!] Esse jogo não existe.")
-            return None
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogos? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Esse jogo não existe.")
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogos? [sim/não]: ").lower()[0]
+
+            if continuar_excluindo == "n":
+                break
+
+        self.mongo.close()
+        return None
+    
+    def deletar_times_relacionados(self, id_jogo: int = None):
+        self.mongo.db["times"].delete_many({"id_jogo": id_jogo})
+        print("[!] Registros relacionados excluídos.")
 
     def verificar_existencia_jogo(self, id_jogo: int = None, external: bool = None):
         df_jogo = self.recuperar_jogo_id(id_jogo, external=external)

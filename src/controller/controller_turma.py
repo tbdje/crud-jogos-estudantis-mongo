@@ -94,7 +94,6 @@ class ControllerTurma:
         self.mongo.connect()
 
         while True:
-            clear_console(0.5)
             id_turma_alteracao = int(input("Insira o ID da turma para alterar: "))
 
             if not self.verificar_existencia_turma(id_turma_alteracao):
@@ -135,34 +134,47 @@ class ControllerTurma:
     def excluir_turma(self):
         self.mongo.connect()
 
-        id_turma_exclusao = int(input("Insira o ID da turma que deseja excluir: "))
+        while True:
+            id_turma_exclusao = int(input("Insira o ID da turma que deseja excluir: "))
 
-        if not self.verificar_existencia_turma(id_turma_exclusao):
-            df_turma = self.recuperar_turma_id(id_turma_exclusao)
+            if not self.verificar_existencia_turma(id_turma_exclusao):
+                df_turma = self.recuperar_turma_id(id_turma_exclusao)
 
-            confirmacao = input("Quer excluir a turma? [sim/não]: ").lower()[0]
+                confirmacao = input("Quer excluir a turma? (todos os times relacionados serão removidos) [sim/não]: ").lower()[0]
 
-            if confirmacao == "s":
-                self.mongo.db["turmas"].delete_one(
-                    {
-                        "id_turma": id_turma_exclusao
-                    }
-                )
+                if confirmacao == "s":
+                    self.deletar_times_relacionados(id_turma_exclusao)
+                    
+                    self.mongo.db["turmas"].delete_one(
+                        {
+                            "id_turma": id_turma_exclusao
+                        }
+                    )
 
-                turma_excluida = Turma(
-                    df_turma.id_turma.values[0],
-                    df_turma.ano.values[0],
-                    df_turma.quantidade_alunos.values[0],
-                    self.validar_escola(df_turma.cnpj.values[0])
-                )
+                    turma_excluida = Turma(
+                        df_turma.id_turma.values[0],
+                        df_turma.ano.values[0],
+                        df_turma.quantidade_alunos.values[0],
+                        self.validar_escola(df_turma.cnpj.values[0])
+                    )
 
-                self.mongo.close()
-                print("[!] Turma removida.")
-                print("[-]", turma_excluida.to_string())
-        else:
-            self.mongo.close()
-            print("[!] Essa turma não existe.")
-            return None
+                    print("[!] Turma removida.")
+                    print("[-]", turma_excluida.to_string())
+                
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Turmas? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Essa turma não existe.")
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Turmas? [sim/não]: ").lower()[0]
+
+            if continuar_excluindo == "n":
+                break
+
+        self.mongo.close()
+        return None
+    
+    def deletar_times_relacionados(self, id_turma: int = None):
+        self.mongo.db["times"].delete_many({"id_turma": id_turma})
+        print("[!] Registros relacionados excluídos.")
 
     def verificar_existencia_turma(self, id_turma: int = None, external: bool = False):
         df_turma = self.recuperar_turma_id(id_turma, external=external)

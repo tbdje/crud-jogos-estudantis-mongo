@@ -58,7 +58,6 @@ class ControllerEscola:
         self.mongo.connect()
 
         while True:
-            clear_console(0.5)
             cnpj = input("Insira o CNPJ da escola para alteração de telefone: ").strip()
 
             if not self.verificar_existencia_escola(cnpj):
@@ -95,24 +94,43 @@ class ControllerEscola:
     def excluir_escola(self):
         self.mongo.connect()
 
-        cnpj = input("Insira o CNPJ da escola para exclusão: ").strip()
+        while True:
+            cnpj = input("Insira o CNPJ da escola para exclusão: ").strip()
 
-        if not self.verificar_existencia_escola(cnpj):
-            df_escola = self.recuperar_escola(cnpj)
-            self.mongo.db["escolas"].delete_one({"cnpj": cnpj})
-            escola_excluida = Escola(
-                df_escola.cnpj.values[0],
-                df_escola.nome.values[0],
-                df_escola.nivel_ensino.values[0],
-                df_escola.endereco.values[0],
-                df_escola.telefone.values[0]
-            )
-            self.mongo.close()
-            print("[!] Escola removida.")
-            print("[-]", escola_excluida.to_string())
-        else:
-            print("[!] Essa escola não existe.")
-            self.mongo.close()
+            if not self.verificar_existencia_escola(cnpj):
+                confirmacao = input("Esta exclusão removerá todos os documentos relacionados, deseja continuar? [sim/não]: ").lower()[0]
+
+                if confirmacao == "n":
+                    break
+
+                self.deletar_jogos_turmas_relacionadas(cnpj)
+
+                df_escola = self.recuperar_escola(cnpj)
+                self.mongo.db["escolas"].delete_one({"cnpj": cnpj})
+                escola_excluida = Escola(
+                    df_escola.cnpj.values[0],
+                    df_escola.nome.values[0],
+                    df_escola.nivel_ensino.values[0],
+                    df_escola.endereco.values[0],
+                    df_escola.telefone.values[0]
+                )
+                print("[!] Escola removida.")
+                print("[-]", escola_excluida.to_string())
+
+                continuar_excluindo = input("\n[?] Deseja continuar excluindo Escolas? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Essa escola não existe.")
+                continuar_excluindo = input("\n[?] Deseja continuar excluindo Escolas? [sim/não]: ").lower()[0]
+
+            if continuar_excluindo == "n":
+                break
+            
+        self.mongo.close()
+
+    def deletar_jogos_turmas_relacionadas(self, cnpj: str = None):
+        self.mongo.db["jogos"].delete_many({"cnpj": cnpj})
+        self.mongo.db["turmas"].delete_many({"cnpj": cnpj})
+        print("[!] Registros relacionados excluídos.")
 
     def verificar_existencia_escola(self, cnpj: str = None, external: bool = False) -> bool:
         if external:

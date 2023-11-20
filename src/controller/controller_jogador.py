@@ -72,7 +72,6 @@ class ControllerJogador:
         self.mongo.connect()
 
         while True:
-            clear_console(0.5)
             cpf_jogador = input("Insira o CPF do jogador a ser alterado [somente os números]: ").strip()
 
             if not self.verificar_existencia_jogador(cpf_jogador):
@@ -118,32 +117,40 @@ class ControllerJogador:
     def excluir_jogador(self):
         self.mongo.connect()
 
-        cpf_jogador_exclusao = input("Insira o CPF do jogador a ser excluído: ").strip()
+        while True:
+            cpf_jogador_exclusao = input("Insira o CPF do jogador a ser excluído: ").strip()
 
-        if not self.verificar_existencia_jogador(cpf_jogador_exclusao):
-            df_jogador = self.recuperar_jogador_cpf(cpf_jogador_exclusao)
+            if not self.verificar_existencia_jogador(cpf_jogador_exclusao):
+                df_jogador = self.recuperar_jogador_cpf(cpf_jogador_exclusao)
 
-            confirmacao = input("Gostaria de excluir o jogador? [sim/não]: ").lower()[0]
+                confirmacao = input("Gostaria de excluir o jogador? [sim/não]: ").lower()[0]
 
-            if confirmacao == "s":
-                self.mongo.db["jogadores"].delete_one({"cpf": cpf_jogador_exclusao})
+                if confirmacao == "s":
+                    self.mongo.db["jogadores"].delete_one({"cpf": cpf_jogador_exclusao})
 
-                jogador_excluido = Jogador(
-                    df_jogador.cpf.values[0],
-                    df_jogador.nome.values[0],
-                    df_jogador.idade.values[0],
-                    df_jogador.posicao.values[0],
-                    df_jogador.numero_camisa.values[0],
-                    self.validar_time(int(df_jogador.id_time.values[0]))
-                )
+                    jogador_excluido = Jogador(
+                        df_jogador.cpf.values[0],
+                        df_jogador.nome.values[0],
+                        df_jogador.idade.values[0],
+                        df_jogador.posicao.values[0],
+                        df_jogador.numero_camisa.values[0],
+                        self.validar_time(int(df_jogador.id_time.values[0]))
+                    )
 
-                self.mongo.close()
-                print("[!] Jogador removido.")
-                print("[-]", jogador_excluido.to_string())
-        else:
-            self.mongo.close()
-            print("[!] Esse jogador não existe.")
-            return None
+                    self.mongo.close()
+                    print("[!] Jogador removido.")
+                    print("[-]", jogador_excluido.to_string())
+                
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogadores? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Esse jogador não existe.")
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogadores? [sim/não]: ").lower()[0]
+
+            if continuar_excluindo == "n":
+                break
+
+        self.mongo.close()        
+        return None
 
     def verificar_existencia_jogador(self, cpf: str = None, external: bool = False):
         df_jogador = self.recuperar_jogador_cpf(cpf, external=external)

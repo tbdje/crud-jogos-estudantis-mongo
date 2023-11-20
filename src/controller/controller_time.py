@@ -111,7 +111,6 @@ class ControllerTime:
         self.mongo.connect()
 
         while True:
-            clear_console(0.5)
             id_time_alteracao = int(input("Insira o ID do time que deseja alterar: "))
 
             if not self.verificar_existencia_time(id_time_alteracao):
@@ -157,36 +156,48 @@ class ControllerTime:
     def excluir_time(self):
         self.mongo.connect()
 
-        id_time_exclusao = int(input("Insira o ID do time que deseja excluir: "))
+        while True:
+            id_time_exclusao = int(input("Insira o ID do time que deseja excluir: "))
 
-        if not self.verificar_existencia_time(id_time_exclusao):
-            df_time = self.recuperar_time_id(id_time_exclusao)
+            if not self.verificar_existencia_time(id_time_exclusao):
+                df_time = self.recuperar_time_id(id_time_exclusao)
 
-            confirmacao = input("Deseja realmente apagar esse time? [sim/não]: ").lower()[0]
+                confirmacao = input("Deseja realmente apagar esse time? (jogadores relacionados também serão excluídos) [sim/não]: ").lower()[0]
 
-            if confirmacao == "s":
-                self.mongo.db["times"].delete_one(
-                    {
-                        "id_time": id_time_exclusao
-                    }
-                )
+                if confirmacao == "s":
+                    self.deletar_jogadores_relacionados(id_time_exclusao)
 
-                time_excluido = Time(
-                    df_time.id_time.values[0],
-                    df_time.nome.values[0],
-                    df_time.treinador.values[0],
-                    df_time.categoria.values[0],
-                    self.validar_turma(int(df_time.id_turma.values[0])),
-                    self.validar_jogo(int(df_time.id_jogo.values[0]))
-                )
+                    self.mongo.db["times"].delete_one(
+                        {
+                            "id_time": id_time_exclusao
+                        }
+                    )
 
-                self.mongo.close()
-                print("[!] Time excluído.")
-                print("[-]", time_excluido.to_string())
-        else:
-            self.mongo.close()
-            print("[!] Esse time não existe.")
-            return None
+                    time_excluido = Time(
+                        df_time.id_time.values[0],
+                        df_time.nome.values[0],
+                        df_time.treinador.values[0],
+                        df_time.categoria.values[0],
+                        self.validar_turma(int(df_time.id_turma.values[0])),
+                        self.validar_jogo(int(df_time.id_jogo.values[0]))
+                    )
+
+                    print("[!] Time excluído.")
+                    print("[-]", time_excluido.to_string())
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Times? [sim/não]: ").lower()[0]
+            else:
+                print("[!] Esse time não existe.")
+                continuar_excluindo = input("[?] Gostaria de continuar excluindo Times? [sim/não]: ").lower()[0]
+
+            if continuar_excluindo == "n":
+                break
+
+        self.mongo.close()
+        return None
+    
+    def deletar_jogadores_relacionados(self, id_time: int = None):
+        self.mongo.db["jogadores"].delete_many({"id_time": id_time})
+        print("[!] Registros relacionados excluídos.")
 
     def verificar_existencia_time(self, id_time: int = None, external: bool = None):
         df_time = self.recuperar_time_id(id_time, external=external)

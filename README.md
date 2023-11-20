@@ -1,6 +1,8 @@
 # CRUD - Jogos Estudantis (NoSQL)
 Projeto de CRUD para um sistema de gerenciamento de Jogos Estudantis utilizando o banco de dados não relacional MongoDB.
 
+O banco contém as coleções: escolas, jogos, turmas, times e jogadores.
+
 Vídeo demonstração: https://youtu.be/HRFn8rx1I3o
 
 ## Execução do Sistema

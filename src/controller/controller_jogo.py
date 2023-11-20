@@ -89,7 +89,7 @@ class ControllerJogo:
 
             print("[+]", novo_jogo.to_string())
 
-            continuar_insercao = input("\n[?] Gostaria de continuar inserindo Escolas? [sim/não]: ").lower()[0]
+            continuar_insercao = input("\n[?] Gostaria de continuar inserindo Jogos? [sim/não]: ").lower()[0]
 
             if continuar_insercao == "n":
                 break

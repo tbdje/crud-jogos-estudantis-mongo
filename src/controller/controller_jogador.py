@@ -141,10 +141,10 @@ class ControllerJogador:
                     print("[!] Jogador removido.")
                     print("[-]", jogador_excluido.to_string())
                 
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogadores? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Jogadores? [sim/não]: ").lower()[0]
             else:
                 print("[!] Esse jogador não existe.")
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogadores? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Jogadores? [sim/não]: ").lower()[0]
 
             if continuar_excluindo == "n":
                 break

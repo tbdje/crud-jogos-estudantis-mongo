@@ -171,10 +171,10 @@ class ControllerJogo:
                     print("[!] Jogo removido.")
                     print("[-]", jogo_excluido.to_string())
 
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogos? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Jogos? [sim/não]: ").lower()[0]
             else:
                 print("[!] Esse jogo não existe.")
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Jogos? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Jogos? [sim/não]: ").lower()[0]
 
             if continuar_excluindo == "n":
                 break

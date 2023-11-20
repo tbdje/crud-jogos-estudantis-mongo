@@ -184,10 +184,10 @@ class ControllerTime:
 
                     print("[!] Time excluído.")
                     print("[-]", time_excluido.to_string())
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Times? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Times? [sim/não]: ").lower()[0]
             else:
                 print("[!] Esse time não existe.")
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Times? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Times? [sim/não]: ").lower()[0]
 
             if continuar_excluindo == "n":
                 break

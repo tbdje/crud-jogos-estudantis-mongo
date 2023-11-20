@@ -161,10 +161,10 @@ class ControllerTurma:
                     print("[!] Turma removida.")
                     print("[-]", turma_excluida.to_string())
                 
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Turmas? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Turmas? [sim/não]: ").lower()[0]
             else:
                 print("[!] Essa turma não existe.")
-                continuar_excluindo = input("[?] Gostaria de continuar excluindo Turmas? [sim/não]: ").lower()[0]
+                continuar_excluindo = input("\n[?] Gostaria de continuar excluindo Turmas? [sim/não]: ").lower()[0]
 
             if continuar_excluindo == "n":
                 break

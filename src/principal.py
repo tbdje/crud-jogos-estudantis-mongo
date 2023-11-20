@@ -32,8 +32,6 @@ def relatorios(opcao: int = None):
         relatorio.get_relatorio_times()
     elif opcao == 7:
         relatorio.get_relatorio_numero_jogos()
-    else:
-        print(INVALIDA)
 
 def inserir(opcao: int = None):
     if opcao == 1:
@@ -46,8 +44,6 @@ def inserir(opcao: int = None):
         controller_time.inserir_time()
     elif opcao == 5:
         controller_jogo.inserir_jogo()
-    else:
-        print(INVALIDA)
 
 def atualizar(opcao: int = None):
     if opcao == 1:
@@ -65,8 +61,6 @@ def atualizar(opcao: int = None):
     elif opcao == 5:
         relatorio.get_relatorio_jogos()
         controller_jogo.atualizar_jogo()
-    else:
-        print(INVALIDA)
 
 def excluir(opcao: int = None):
     if opcao == 1:
@@ -84,8 +78,6 @@ def excluir(opcao: int = None):
     elif opcao == 5:
         relatorio.get_relatorio_jogos()
         controller_jogo.excluir_jogo()
-    else:
-        print(INVALIDA)
 
 def executar():
     print(splash_screen.get_updated_screen())
